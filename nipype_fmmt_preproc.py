@@ -58,8 +58,9 @@ datasource.inputs.sort_filelist = True
 ## realign: estimate and reslice
 # reslice only mean image; Q: why?
 
-realign = pe.Node(interface=spm.Realign(), name="realign") # Q:how to align only mean?
+realign = pe.Node(interface=spm.Realign(), name="realign")
 realign.inputs.register_to_mean = True
+realign.inputs.jobtype = 'write' # reslice only Q: why?
 
 ## coregister: estimate
 # T2* to T2
@@ -67,9 +68,14 @@ realign.inputs.register_to_mean = True
 
 coregister = pe.Node(interface=spm.Coregister(), name="coregister")
 coregister.inputs.jobtype = 'estimate' # this does func to struc; Q: how to specify which struc
+coregister.iterables = ('target', 'func')
+coregister.inputs.source = 't2.nii'
 
-coregister = pe.Node(interface=spm.Coregister(), name="coregister")
-coregister.inputs.jobtype = 'estimate'  # coreg output of T2 and T2* to T1
+coregister2 = pe.Node(interface=spm.Coregister(), name="coregister2")
+coregister2.inputs.jobtype = 'estimate'  # coreg output of T2 and T2* to T1
+coregister2.iterables = ('target', ['func','t2.nii'])
+coregister2.inputs.source = 't1.nii'
+
 
 ## old segment
 # Q: why old?
@@ -85,8 +91,7 @@ normalize.inputs.template = os.path.abspath('data/T1.nii') # Q: dir of MNI?
 
 
 smooth = pe.Node(interface=spm.Smooth(), name="smooth")
-fwhmlist = [8] # Q: is this necessary?
-smooth.iterables = ('fwhm', fwhmlist)
+smooth.iterables = ('fwhm', [8])
 
 ## set up pipeline
 
